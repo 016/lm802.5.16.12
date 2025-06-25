@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <!-- 原有head部分保持不变 -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gamepad Tester|手柄测试</title>
+    <link href="./bootstrap.min.v5.3.5.css" rel="stylesheet">
+    <script src="./vue.global.v3.5.13.js"></script>
+    <style>
+        /* 原有样式保持不变 */
+        .gamepad-tab {
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-top: none;
+        }
+
+        .btn-box {
+            position: relative;
+            height: 60px;
+            margin: 8px;
+            background: #f8f9fa;
+            min-width: 120px;
+        }
+
+        .btn-active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #0d6efd;
+            width: calc(var(--active-width, 0) * 100%);
+            left: 0%;
+            transform: translateX(-0%);
+        }
+
+        .joystick-box {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            border: 2px solid #666;
+            border-radius: 50%;
+        }
+
+        .joystick-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #0d6efd;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .guideline {
+            position: absolute;
+            border-left: 1px dashed rgba(0, 0, 0, 0.2);
+            border-top: 1px dashed rgba(0, 0, 0, 0.2);
+        }
+
+        .guideline-x {
+            left: 50%;
+            top: 0;
+            bottom: 0;
+        }
+
+        .guideline-y {
+            top: 50%;
+            left: 0;
+            right: 0;
+        }
+
+        /* 新增摇杆数值样式 */
+        .joystick-value-box {
+            background: #f8f9fa;
+        }
+
+        /* 摇杆预览 */
+        .axis-indicator {
+            position: relative;
+            height: 24px;
+            margin: 8px 0;
+        }
+
+        .axis-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #dee2e6;
+            transform: translateY(-50%);
+        }
+
+        .axis-active {
+            position: absolute;
+            height: 3px;
+            background: #0d6efd;
+            transition: all 0.1s;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header class="p-3 mb-3 border-bottom">
+            <div class="container">
+                <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+                    <a href="/" class="align-items-center mb-3 mb-lg-0 link-body-emphasis text-decoration-none text-primary">
+                        <svg  xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-dpad " viewBox="0 0 20 20">
+                            <path d="m7.788 2.34-.799 1.278A.25.25 0 0 0 7.201 4h1.598a.25.25 0 0 0 .212-.382l-.799-1.279a.25.25 0 0 0-.424 0Zm0 11.32-.799-1.277A.25.25 0 0 1 7.201 12h1.598a.25.25 0 0 1 .212.383l-.799 1.278a.25.25 0 0 1-.424 0ZM3.617 9.01 2.34 8.213a.25.25 0 0 1 0-.424l1.278-.799A.25.25 0 0 1 4 7.201V8.8a.25.25 0 0 1-.383.212Zm10.043-.798-1.277.799A.25.25 0 0 1 12 8.799V7.2a.25.25 0 0 1 .383-.212l1.278.799a.25.25 0 0 1 0 .424Z"/>
+                            <path d="M6.5 0A1.5 1.5 0 0 0 5 1.5v3a.5.5 0 0 1-.5.5h-3A1.5 1.5 0 0 0 0 6.5v3A1.5 1.5 0 0 0 1.5 11h3a.5.5 0 0 1 .5.5v3A1.5 1.5 0 0 0 6.5 16h3a1.5 1.5 0 0 0 1.5-1.5v-3a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 0 16 9.5v-3A1.5 1.5 0 0 0 14.5 5h-3a.5.5 0 0 1-.5-.5v-3A1.5 1.5 0 0 0 9.5 0zM6 1.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3A1.5 1.5 0 0 0 11.5 6h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a1.5 1.5 0 0 0-1.5 1.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-3A1.5 1.5 0 0 0 4.5 10h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 0 6 4.5z"/>
+                        </svg>
+                        <span class="fs-4 ms-1">{{ t('siteTitle') }}</span>
+                    </a>
+                    <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 ms-4 justify-content-center mb-md-0">
+                        <li><a href="#" class="nav-link px-2 link-secondary">{{ t('home') }}</a></li>
+                        <li><a href="#" class="nav-link px-2 link-body-emphasis">{{ t('about') }}</a></li>
+                        <li><a href="#" class="nav-link px-2 link-body-emphasis">{{ t('contact') }}</a></li>
+                    </ul>
+                    <div class="d-flex">
+                        <button @click="changeLanguage('zh')" class="btn btn-sm"
+                                :class="{'btn-outline-secondary': lang !== 'zh', 'btn-secondary': lang === 'zh'}">中文
+                        </button>
+                        <button @click="changeLanguage('en')" class="btn btn-sm ms-2"
+                                :class="{'btn-outline-secondary': lang !== 'en', 'btn-secondary': lang === 'en'}">English
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="container mb-2">
+            <!-- 原有内容保持不变 -->
+            <h3 class="mb-3 d-none">{{ t('siteTitle') }}</h3>
+            <div v-if="gamepads.length < 1">
+                <div class="alert alert-success" role="alert">
+                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                    <span role="status"> {{t('loadingNewPad')}}</span>
+                    <hr>
+                    <ol v-html="t('loadingNewPad_desc')">
+                    </ol>
+                </div>
+            </div>
+
+            <nav v-if="gamepads.length > 0">
+                <div class="nav nav-tabs">
+                    <button v-for="(gp, index) in gamepads" :key="index"
+                            class="nav-link" :class="{active: activeTab === index}"
+                            @click="activeTab = index">
+                        #{{ index + 1 }}
+                    </button>
+
+                    <button class="nav-link">
+                        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                        <span role="status">  {{t('loadingNewPad')}}</span>
+                    </button>
+
+                </div>
+            </nav>
+
+            <div v-for="(gp, index) in gamepads" :key="index" v-show="activeTab === index" class="gamepad-tab">
+                <h4>{{ gp.id }} </h4>
+                <small class="fs-6 text-secondary ms-2 me-1">{{ t('startDate') }}: {{ formatTime(gp.startDate) }}</small> |
+                <small class="fs-6 text-secondary ms-1">{{ t('lastAction') }}: {{ formatTime(gp.lastAction) }}</small>
+
+
+                <hr/>
+                <!-- 原有手柄内容保持不变 -->
+                <!-- 按钮区域 -->
+                <div class="mt-5">
+                    <h4 class="mb-3 ms-2">{{ t('btnValues') }}</h4>
+                    <div class="d-flex flex-wrap mb-4">
+
+                        <div v-for="(btn, btnIndex) in gp.buttons" :key="btnIndex"
+                             :style="{ '--active-width': btn.value }"
+                             class="btn-box d-flex flex-column align-items-center justify-content-center"
+                             :class="{'btn-active': btn.pressed}">
+                            <small>B{{ btnIndex }} {{btnTitle['i_'+btnIndex]}}</small>
+                            <span class="mt-1">{{ btn.value.toFixed(2) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- 新增摇杆数值展示 -->
+                <div class="mt-5 p-1">
+                    <h4 class="mb-3">{{ t('joystickValues') }}</h4>
+                    <div class="row">
+                        <div v-for="(axis, axisIndex) in gp.axes.slice(0,4)"
+                             :key="axisIndex"
+                             class="col-6 col-md-3">
+                            <div class="joystick-value-box py-2 mb-2">
+                                <div class="axis-indicator">
+                                    <div class="axis-line"></div>
+                                    <div class="axis-active"
+                                         :style="getAxisStyle(axis)"></div>
+                                </div>
+                                <div class="text-center small">
+                                    Axis {{ axisIndex }}: {{ axis.toFixed(12) }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 摇杆区域 -->
+                <div class="d-flex justify-content-around mt-2 mb-4">
+                    <div class="joystick-box" ref="leftStick">
+                        <div class="guideline guideline-x"></div>
+                        <div class="guideline guideline-y"></div>
+                        <div class="joystick-dot" :style="leftStickStyle(index)"></div>
+                    </div>
+                    <div class="joystick-box" ref="rightStick">
+                        <div class="guideline guideline-x"></div>
+                        <div class="guideline guideline-y"></div>
+                        <div class="joystick-dot" :style="rightStickStyle(index)"></div>
+                    </div>
+                </div>
+
+                <hr/>
+                <div class="mt-2">
+                    <button class="btn btn-sm1 btn-secondary" @click="vibrate(index)">
+                        {{ t('vibrateTest') }}
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+
+        <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+            <div class="col-md-4 d-flex align-items-center"><a href="/"
+                                                               class="mb-3 me-2 mb-md-0 text-body-secondary text-decoration-none lh-1"
+                                                               aria-label="Bootstrap">
+                <svg class="bi" width="30" height="24" aria-hidden="true">
+                    <use xlink:href="#bootstrap"></use>
+                </svg>
+            </a> <span class="mb-3 mb-md-0 text-body-secondary">© 2025 lib00.com</span></div>
+            <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
+                <span class="me-3">v1.0@202506</span>
+            </ul>
+        </footer>
+    </div>
+
+
+
+<script>
+    const {createApp} = Vue;
+
+    createApp({
+        data() {
+            return {
+                gamepads: [],
+                btnTitle: {
+                    i_0:' - A',
+                    i_1:' - B',
+                    i_2:' - X',
+                    i_3:' - Y',
+                    i_4:' - LB',
+                    i_5:' - RB',
+                    i_6:' - LT',
+                    i_7:' - RT',
+                    i_8:' - Map',
+                    i_9:' - Menu',
+                    i_10:' - LS',
+                    i_11:' - RS',
+                    i_12:' - ↑',
+                    i_13:' - ↓',
+                    i_14:' - ←',
+                    i_15:' - →',
+                    i_17:' - Share',
+                },
+                activeTab: 0,
+                lang: this.getLanguage(),
+                i18n: {
+                    zh: {
+                        siteTitle: "手柄测试工具",
+                        vibrateTest: "震动测试",
+                        lastAction: "最后操作时间",
+                        startDate: "开始测试",
+                        home: "首页",
+                        about: "关于",
+                        contact: "联系我们",
+                        btnValues: "按钮数值分析",
+                        joystickValues: "摇杆数值分析",
+                        loadingNewPad: " 正在检测新手柄",
+                        loadingNewPad_desc: "<li>将手柄连接至设备</li><li>按手柄任意键</li><li>开始测试</li>",
+                    },
+                    en: {
+                        siteTitle: "Gamepad Tester",
+                        vibrateTest: "Vibration Test",
+                        lastAction: "Last action",
+                        startDate: "Start test",
+                        home: "Home",
+                        about: "About",
+                        contact: "Contact",
+                        btnValues: "Button Analysis",
+                        joystickValues: "Joystick Analysis",
+                        loadingNewPad: " loading new gamepad",
+                        loadingNewPad_desc: "<li>Connect the controller to the device</li><li>Press any key on the controller</li><li>Start test</li>",
+                    }
+                }
+            }
+        },
+        computed: {
+            t() {
+                return (key) => this.i18n[this.lang][key] || key;
+            }
+        },
+        methods: {
+            updateGamepads() {
+                const currentTime = Date.now();
+                const nativePads = [...navigator.getGamepads()].filter(g => g);
+
+                this.gamepads = nativePads.map((nativePad, index) => {
+                    const existingPad = this.gamepads[index] || {lastAction: null};
+                    const hasAction = nativePad.buttons.some(b => b.pressed) ||
+                        nativePad.axes.some(a => Math.abs(a) > 0.1);
+
+                    let startDate;
+                    if (this.gamepads[index] === undefined) {
+                        //new created
+                        startDate = new Date();
+                    } else {
+                        //just load
+                        startDate = this.gamepads[index].startDate;
+                    }
+
+                    return {
+                        ...nativePad,
+                        id: nativePad.id,
+                        index: nativePad.index,
+                        mapping: nativePad.mapping,
+                        connected: nativePad.connected,
+                        timestamp: nativePad.timestamp,
+                        buttons: [...nativePad.buttons],
+                        axes: [...nativePad.axes],
+                        startDate: startDate,
+                        lastAction: hasAction ? currentTime : existingPad.lastAction
+                    };
+                });
+            },
+
+            getAxisStyle(value) {
+                if (value === 0) return {width: '0'};
+
+                const percentage = Math.abs(value) * 50;
+                return value < 0
+                    ? {width: `${percentage}%`, left: `${50 - percentage}%`}
+                    : {width: `${percentage}%`, left: '50%'};
+            },
+            // 其他方法保持不变
+            leftStickStyle(index) {
+                const axes = this.gamepads[index]?.axes || [];
+                return {
+                    left: `${50 + (axes[0] || 0) * 40}%`,
+                    top: `${50 + (axes[1] || 0) * 40}%`
+                };
+            },
+            rightStickStyle(index) {
+                const axes = this.gamepads[index]?.axes || [];
+                return {
+                    left: `${50 + (axes[2] || 0) * 40}%`,
+                    top: `${50 + (axes[3] || 0) * 40}%`
+                };
+            },
+            async vibrate(index) {
+                const gamepad = navigator.getGamepads()[index];
+                if (gamepad?.vibrationActuator) {
+                    gamepad.vibrationActuator.playEffect("dual-rumble", {
+                        startDelay: 0,
+                        duration: 500,
+                        weakMagnitude: 1.0,
+                        strongMagnitude: 1.0
+                    });
+                }
+            },
+            formatTime(timestamp) {
+                return timestamp ? new Date(timestamp).toLocaleTimeString() : '-';
+            },
+            getLanguage() {
+                // 1. 检查 localStorage
+                const langValue = localStorage.getItem('lang');
+                if (langValue && ['en', 'zh'].includes(langValue)) {
+                    return langValue; // 如果 localStorage 中有有效值
+                }
+
+                // 2. 检查浏览器语言
+                const browserLang = navigator.language || navigator.userLanguage;
+                if (browserLang.startsWith('zh')) {
+                    return 'zh'; // 中文用户
+                }
+
+                // 3. 默认语言为 en
+                return 'en';
+            },
+            setLanguage(lang) {
+                if (['en', 'zh'].includes(lang)) {
+                    localStorage.setItem('lang', lang);
+                }
+            },
+            changeLanguage(lang){
+                this.lang = lang;
+                this.setLanguage(lang)
+            }
+
+
+        },
+        mounted() {
+            const updateLoop = () => {
+                this.updateGamepads();
+                requestAnimationFrame(updateLoop);
+            };
+            updateLoop();
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
